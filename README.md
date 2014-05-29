@@ -1,4 +1,4 @@
-ng-Slider
+ng-Slider.js
 =========
 
 Slider element for AngularJS 

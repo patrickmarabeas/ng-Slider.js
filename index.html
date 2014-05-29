@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html data-ng-app="demo">
+<head>
+
+  <title>ng-Slider.js</title>
+
+  <script type="text/javascript" src="http://code.angularjs.org/1.2.12/angular.min.js"></script>
+  <script type="text/javascript" src="demo.js"></script>
+  <script type="text/javascript" src="ng-Slider.js"></script>
+
+  <link rel="stylesheet/less" type="text/css" href="styles/main.less"/>
+  <link rel="stylesheet/less" type="text/css" href="ng-Slider.less"/>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/1.5.0/less.min.js"></script>
+
+</head>
+<body data-ng-controller="demoController">
+
+  <div data-ng-model="slider" data-slider="range" data-position="top" data-decimal=""></div>
+
+  <p>{{slider.min}}</p>
+  <p>{{slider.max}}</p>
+
+  <input type="button" ng-click="changeData()" value="dataset: 3 -> 7">
+  <input type="button" ng-click="changeData2()" value="dataset: -100 -> 100">
+  <input type="button" ng-click="changeData3()" value="dataset: 1 -> 10 (original)">
+
+  <!--<div data-ng-model="slider2" data-slider="range"></div>-->
+
+  <!--<div data-ng-model="slider3" data-slider="range"></div>-->
+
+
+
+</body>
+</html>
