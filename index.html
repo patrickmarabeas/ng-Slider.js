@@ -15,13 +15,15 @@
 </head>
 <body data-ng-controller="demoController">
 
-  <div data-ng-model="slider" data-slider="range" data-position="top" data-decimal=""></div>
+
+  <div data-ng-model="slider" data-slider="range" data-decimal=""></div>
 
   <p>{{slider.min}}</p>
   <p>{{slider.max}}</p>
 
   <input type="button" ng-click="changeData()" value="dataset: 3 -> 7">
   <input type="button" ng-click="changeData2()" value="dataset: -100 -> 100">
+  <input type="button" ng-click="changeData4()" value="dataset: 1 -> 40">
   <input type="button" ng-click="changeData3()" value="dataset: 1 -> 10 (original)">
 
   <!--<div data-ng-model="slider2" data-slider="range"></div>-->
