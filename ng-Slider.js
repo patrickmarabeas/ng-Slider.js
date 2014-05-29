@@ -28,12 +28,13 @@ angular.module( 'ngSlider', [] )
         this.max = $scope.ngModel.max = maxValue;
         this.limits = [minValue, maxValue];
         this.range = $scope.ngModel.range = $attrs.slider === 'range';
-        this.decimal = $scope.ngModel.decimal = $attrs.decimal || 0;
+        this.decimal = $scope.ngModel.decimal = $attrs.decimal || $scope.ngModel.decimal || 0;
 
         $scope.$watch( function() { return $scope.ngModel.data; }, function( newVal ) {
           _this.limits = [ Math.min.apply(null, newVal), Math.max.apply(null, newVal) ];
           $scope.$broadcast('render');
         });
+
 
       }],
       scope: {
@@ -99,7 +100,12 @@ angular.module( 'ngSlider', [] )
       template: '{{ngModel}}',
       link: function( scope, element, attrs, ctrl ) {
 
-
+        if( attrs.ngModel === 'ngModel.min' ) {
+          var type = 'min';
+        }
+        if( attrs.ngModel === 'ngModel.max' ) {
+          var type = 'max';
+        }
 
 
 
@@ -113,19 +119,23 @@ angular.module( 'ngSlider', [] )
 
         var render = function( offset ) {
 
+          var currentMin = scope.$parent.ngModel.min;
+          var currentMax = scope.$parent.ngModel.max;
+
           $rootScope.$broadcast('rangepls');
 
           var number = ( scope.ngModel - ctrl.limits[0] ) / (ctrl.limits[1] - ctrl.limits[0]) * 100;
           var the_thumb_pos = Math.min(Math.max( number, 0), 100);
           element.css('left', the_thumb_pos + '%');
 
+
+          // TO STOP RANGE LIMITS BEING BUGGERED WHEN THE DATASET CHANGES
           if( scope.ngModel > ctrl.limits[1] ) {
             scope.ngModel = ctrl.limits[1];
           }
           else if( scope.ngModel < ctrl.limits[0] ) {
             scope.ngModel = ctrl.limits[0];
           }
-
 
 
         };
@@ -175,29 +185,45 @@ angular.module( 'ngSlider', [] )
           var trackOrigine = track_bb.left;
           var trackSize = track_bb.width;
 
-
-
           var pos = mouseEvent.clientX;
 
           var offset = ( pos - element[0].getBoundingClientRect().left );
 
+
+
 //console.log(offset);
 
           var number = ctrl.limits[0] + ((pos - trackOrigine ) / trackSize) * (ctrl.limits[1] - ctrl.limits[0]);
+//
+//          var the_thumb_pos = Math.min(Math.max(Math.round(
+//              number * (Math.pow(10, ctrl.decimal))
+//          ) / (Math.pow(10, ctrl.decimal)), ctrl.limits[0]), ctrl.limits[1]);
 
-          var the_thumb_pos = Math.min(Math.max(Math.round(
-              number * (Math.pow(10, ctrl.decimal))
-          ) / (Math.pow(10, ctrl.decimal)), ctrl.limits[0]), ctrl.limits[1]);
+
+          var currentMin = scope.$parent.ngModel.min;
+          var currentMax = scope.$parent.ngModel.max;
+
+
+
+          if(type === 'max') {
+
+            var the_thumb_pos = Math.min(Math.max(Math.round(
+                number * (Math.pow(10, ctrl.decimal))
+            ) / (Math.pow(10, ctrl.decimal)), currentMin), ctrl.limits[1]);
+
+          }
+          else if(type === 'min') {
+
+            var the_thumb_pos = Math.min(Math.max(Math.round(
+                number * (Math.pow(10, ctrl.decimal))
+            ) / (Math.pow(10, ctrl.decimal)), ctrl.limits[0]), currentMax);
+
+          }
+
 
           scope.ngModel = the_thumb_pos;
           scope.$apply();
           render( offset );
-
-
-
-
-
-
 
 
 
