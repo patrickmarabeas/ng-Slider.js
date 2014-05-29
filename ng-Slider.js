@@ -138,6 +138,14 @@ angular.module( 'ngSlider', [] )
           }
 
 
+          if( type === 'min' && scope.ngModel == ctrl.limits[1] ) {
+            element.addClass('maxed');
+          }
+          else {
+            element.removeClass('maxed');
+          }
+
+
         };
 
         render();
