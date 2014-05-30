@@ -100,12 +100,6 @@ angular.module( 'ngSlider', [] )
       template: '{{ngModel}}',
       link: function( scope, element, attrs, ctrl ) {
 
-        if( attrs.ngModel === 'ngModel.min' ) {
-          var type = 'min';
-        }
-        if( attrs.ngModel === 'ngModel.max' ) {
-          var type = 'max';
-        }
 
 
 
@@ -138,7 +132,7 @@ angular.module( 'ngSlider', [] )
           }
 
 
-          if( type === 'min' && scope.ngModel == ctrl.limits[1] ) {
+          if( attrs.ngModel === 'ngModel.min' && scope.ngModel == ctrl.limits[1] ) {
             element.addClass('maxed');
           }
           else {
@@ -187,76 +181,23 @@ angular.module( 'ngSlider', [] )
 
         function _handleMouseEvent(mouseEvent) {
 
-          var track_bb = element.parent()[0].getBoundingClientRect();
-
-          var time = +new Date();
-          var trackOrigine = track_bb.left;
-          var trackSize = track_bb.width;
-
-          var pos = mouseEvent.clientX;
-
-          var offset = ( pos - element[0].getBoundingClientRect().left );
-
-
-
-//console.log(offset);
-
-          var number = ctrl.limits[0] + ((pos - trackOrigine ) / trackSize) * (ctrl.limits[1] - ctrl.limits[0]);
-//
-//          var the_thumb_pos = Math.min(Math.max(Math.round(
-//              number * (Math.pow(10, ctrl.decimal))
-//          ) / (Math.pow(10, ctrl.decimal)), ctrl.limits[0]), ctrl.limits[1]);
-
-
           var currentMin = scope.$parent.ngModel.min;
           var currentMax = scope.$parent.ngModel.max;
+          var parentElmBB = element.parent()[0].getBoundingClientRect();
+          // Translate cursor position value into position within data set
+          var number = ctrl.limits[0] + (( mouseEvent.clientX - parentElmBB.left ) / parentElmBB.width) * (ctrl.limits[1] - ctrl.limits[0]);
 
+          scope.$apply( function() {
 
+            scope.ngModel = ( attrs.ngModel === 'ngModel.min' )
+              // MIN THUMB: Limit range of movement to lower limit and the current max thumb
+              ? Math.min( Math.max( Math.round( number * ( Math.pow( 10, ctrl.decimal ))) / ( Math.pow( 10, ctrl.decimal)), ctrl.limits[0] ), currentMax )
+              // MAX THUMB: Limit range of movement to upper limit and the current min thumb
+              : Math.min( Math.max( Math.round( number * ( Math.pow( 10, ctrl.decimal ))) / ( Math.pow( 10, ctrl.decimal)), currentMin ), ctrl.limits[1] );
 
-
-
-
-          if(type === 'max') {
-
-
-
-            var closest = 0;
-            angular.forEach( scope.$parent.ngModel.data , function(value){
-//              console.log(value - number);
-
-
-              if (Math.abs(value - number) < Math.abs(closest - number)) {
-                closest = value;
-                the_thumb_pos = value;
-//                console.log(closest);
-              }
-            });
-
-//            var the_thumb_pos = Math.min(Math.max(Math.round(
-//                number * (Math.pow(10, ctrl.decimal))
-//            ) / (Math.pow(10, ctrl.decimal)), currentMin), ctrl.limits[1]);
-
-          }
-          else if(type === 'min') {
-
-            var the_thumb_pos = Math.min(Math.max(Math.round(
-                number * (Math.pow(10, ctrl.decimal))
-            ) / (Math.pow(10, ctrl.decimal)), ctrl.limits[0]), currentMax);
-
-          }
-
-
-          scope.ngModel = the_thumb_pos;
-          scope.$apply();
-          render( offset );
-
-
-
+            render();
+          });
         }
-
-
-
-
       }
     }
   }])
