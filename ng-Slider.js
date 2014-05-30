@@ -1,4 +1,4 @@
-/* ng-Slider.js v0.0.1
+/* ng-Slider.js v1.0.0
  * https://github.com/patrickmarabeas/ng-Slider.js
  *
  * Copyright 2014, Patrick Marabeas http://marabeas.io
@@ -11,16 +11,12 @@
 'use strict';
 
 angular.module( 'ngSlider', [] )
-  .value( 'config', {
 
-  })
-
-  .directive( 'slider', [ 'config', 'sliderConfig', function( config, sliderConfig ) {
+  .directive( 'slider', [ function() {
     return {
       restrict: 'A',
       controller: [ '$scope', '$element', '$attrs', function( $scope, $element, $attrs ) {
         var _this = this;
-
         var minValue = Math.min.apply( null, $scope.ngModel.data );
         var maxValue = Math.max.apply( null, $scope.ngModel.data );
 
@@ -34,8 +30,6 @@ angular.module( 'ngSlider', [] )
           _this.limits = [ Math.min.apply(null, newVal), Math.max.apply(null, newVal) ];
           $scope.$broadcast('render');
         });
-
-
       }],
       scope: {
         ngModel: '='
@@ -47,13 +41,6 @@ angular.module( 'ngSlider', [] )
           '<div data-thumb data-ng-model="ngModel.max" data-ng-if="ngModel.range"></div>';
       },
       link: function( scope, element, attrs ) {
-        angular.extend( config, sliderConfig.config );
-
-
-
-
-
-
 
       }
     }
@@ -66,31 +53,26 @@ angular.module( 'ngSlider', [] )
       template: '{{ngModel.min}}',
       link: function( scope, element, attrs, ctrl ) {
 
+        scope.$on( 'update range', function() {
 
-
-        scope.$on( 'rangepls', function() {
-
-          var min = (( scope.ngModel.min - ctrl.limits[0] ) / (ctrl.limits[1] - ctrl.limits[0]) * 100);
-          var max = (( scope.ngModel.max - ctrl.limits[0] ) / (ctrl.limits[1] - ctrl.limits[0]) * 100);
-
-
+          // Range based upon percentage
+          var min = Math.min( Math.max(( scope.ngModel.min - ctrl.limits[0] ) / ( ctrl.limits[1] - ctrl.limits[0] ) * 100, 0), 100);
+          var max = Math.min( Math.max(( scope.ngModel.max - ctrl.limits[0] ) / ( ctrl.limits[1] - ctrl.limits[0] ) * 100, 0), 100);
 
           element.css({
-            'left':  Math.min(Math.max( min, 0), 100) + '%',
-            'right': ( 100 -  Math.min(Math.max( max, 0), 100) ) + '%'
+            'left':  min + '%',
+            'right': ( 100 - max ) + '%'
           });
 
         });
-
-
 
       }
     }
   }])
 
-  .directive( 'thumb', [ '$rootScope', function($rootScope) {
+  .directive( 'thumb', [ '$rootScope', '$document', function($rootScope, $document) {
 
-    var htmlElement = angular.element(document.body.parentElement);
+
 
     return {
       require: '^slider',
@@ -100,115 +82,73 @@ angular.module( 'ngSlider', [] )
       template: '{{ngModel}}',
       link: function( scope, element, attrs, ctrl ) {
 
-
-
-
-
-
-        scope.$on( 'render', function() {
-          render();
-        });
-
-
-
-        var render = function( offset ) {
-
-          var currentMin = scope.$parent.ngModel.min;
-          var currentMax = scope.$parent.ngModel.max;
-
-          $rootScope.$broadcast('rangepls');
-
-          var number = ( scope.ngModel - ctrl.limits[0] ) / (ctrl.limits[1] - ctrl.limits[0]) * 100;
-          var the_thumb_pos = Math.min(Math.max( number, 0), 100);
-          element.css('left', the_thumb_pos + '%');
-
-
-          // TO STOP RANGE LIMITS BEING BUGGERED WHEN THE DATASET CHANGES
-          if( scope.ngModel > ctrl.limits[1] ) {
-            scope.ngModel = ctrl.limits[1];
-          }
-          else if( scope.ngModel < ctrl.limits[0] ) {
-            scope.ngModel = ctrl.limits[0];
-          }
-
-
-          if( attrs.ngModel === 'ngModel.min' && scope.ngModel == ctrl.limits[1] ) {
-            element.addClass('maxed');
-          }
-          else {
-            element.removeClass('maxed');
-          }
-
-
-        };
-
-        render();
-
-
-
-
-
-
-
-
-
-
-
-
         if ( !ctrl.range ) {
-//          ctrl.element.on('mousedown touchstart', function (e) {
+
+
+
+
+//          ctrl.element.on('mousedown touchstart', function ( mouseEvent ) {
 //            // clicking on slider itself moves the thumb
 //          });
+
+
+
+
         } else {
 
-//          console.log('yep');
+          element.on('mousedown touchstart', function ( mouseEvent ) {
 
-          element.on('mousedown touchstart', function (e) {
+            mouseEvent.preventDefault();
+            mouseEvent.stopPropagation();
+            $document.bind( 'mousemove touchmove', function( mouseEvent ) {
 
-//            console.log('down');
+              var currentMin = scope.$parent.ngModel.min;
+              var currentMax = scope.$parent.ngModel.max;
+              var parentElmBB = element.parent()[0].getBoundingClientRect();
+              // Translate cursor position value into position within data set
+              var thumbPos = ctrl.limits[0] + (( mouseEvent.clientX - parentElmBB.left ) / parentElmBB.width ) * ( ctrl.limits[1] - ctrl.limits[0] );
 
-            e.preventDefault();
-            e.stopPropagation();
-            htmlElement.bind( 'mousemove touchmove', _handleMouseEvent );
+              scope.$apply( function() {
+
+                scope.ngModel = ( attrs.ngModel === 'ngModel.min' )
+                  // MIN THUMB: Limit range of movement to lower limit and the current max thumb
+                  ? Math.min( Math.max( Math.round( thumbPos * ( Math.pow( 10, ctrl.decimal ))) / ( Math.pow( 10, ctrl.decimal)), ctrl.limits[0] ), currentMax )
+                  // MAX THUMB: Limit range of movement to upper limit and the current min thumb
+                  : Math.min( Math.max( Math.round( thumbPos * ( Math.pow( 10, ctrl.decimal ))) / ( Math.pow( 10, ctrl.decimal)), currentMin ), ctrl.limits[1] );
+
+                scope.render();
+
+              });
+            });
+
             return false;
           });
-        }
-        htmlElement.on('mouseup touchend', function () {
 
-          htmlElement.unbind('mousemove touchmove');
+
+          ( scope.render = function() {
+
+            var thumbPos = Math.min(Math.max(( scope.ngModel - ctrl.limits[0] ) / ( ctrl.limits[1] - ctrl.limits[0] ) * 100, 0 ), 100);
+            element.css('left', thumbPos + '%');
+
+            // Keep the min and max within a smaller range than selected on data set change
+            if( scope.ngModel > ctrl.limits[1] ) scope.ngModel = ctrl.limits[1];
+            if( scope.ngModel < ctrl.limits[0] ) scope.ngModel = ctrl.limits[0];
+
+            // Make the min thumb accessible when under the max thumb at max range
+            element.toggleClass('maxed', attrs.ngModel === 'ngModel.min' && scope.ngModel == ctrl.limits[1] );
+            $rootScope.$broadcast('update range');
+          })();
+
+          scope.$on( 'render', function() {
+            scope.render();
+          });
+
+        }
+
+        $document.on('mouseup touchend', function () {
+          $document.unbind('mousemove touchmove');
         });
 
-
-        function _handleMouseEvent(mouseEvent) {
-
-          var currentMin = scope.$parent.ngModel.min;
-          var currentMax = scope.$parent.ngModel.max;
-          var parentElmBB = element.parent()[0].getBoundingClientRect();
-          // Translate cursor position value into position within data set
-          var number = ctrl.limits[0] + (( mouseEvent.clientX - parentElmBB.left ) / parentElmBB.width) * (ctrl.limits[1] - ctrl.limits[0]);
-
-          scope.$apply( function() {
-
-            scope.ngModel = ( attrs.ngModel === 'ngModel.min' )
-              // MIN THUMB: Limit range of movement to lower limit and the current max thumb
-              ? Math.min( Math.max( Math.round( number * ( Math.pow( 10, ctrl.decimal ))) / ( Math.pow( 10, ctrl.decimal)), ctrl.limits[0] ), currentMax )
-              // MAX THUMB: Limit range of movement to upper limit and the current min thumb
-              : Math.min( Math.max( Math.round( number * ( Math.pow( 10, ctrl.decimal ))) / ( Math.pow( 10, ctrl.decimal)), currentMin ), ctrl.limits[1] );
-
-            render();
-          });
-        }
       }
     }
-  }])
-
-  .provider( 'sliderConfig', function() {
-    var self = this;
-    this.config = {};
-    this.$get = function() {
-      var extend = {};
-      extend.config = self.config;
-      return extend;
-    };
-    return this;
-  });
+  }]);
