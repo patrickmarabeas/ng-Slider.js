@@ -3,7 +3,7 @@ var demo = angular.module( 'demo', ['ngSlider'] );
 demo.controller('demoController', [ '$scope', function( $scope ) {
   $scope.slider = {};
 //  $scope.slider.decimal = 1;
-  $scope.slider.data = [3,5,6,7,8,1,2,3,6,9,3,4,7];
+  $scope.slider.data = [1,3,4,7,9,10,11,13,14,17,18];
 
   $scope.slider2 = {};
   $scope.slider2.data = [5,10];

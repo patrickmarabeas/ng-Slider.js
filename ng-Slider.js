@@ -213,11 +213,28 @@ angular.module( 'ngSlider', [] )
 
 
 
+
+
+
           if(type === 'max') {
 
-            var the_thumb_pos = Math.min(Math.max(Math.round(
-                number * (Math.pow(10, ctrl.decimal))
-            ) / (Math.pow(10, ctrl.decimal)), currentMin), ctrl.limits[1]);
+
+
+            var closest = 0;
+            angular.forEach( scope.$parent.ngModel.data , function(value){
+//              console.log(value - number);
+
+
+              if (Math.abs(value - number) < Math.abs(closest - number)) {
+                closest = value;
+                the_thumb_pos = value;
+//                console.log(closest);
+              }
+            });
+
+//            var the_thumb_pos = Math.min(Math.max(Math.round(
+//                number * (Math.pow(10, ctrl.decimal))
+//            ) / (Math.pow(10, ctrl.decimal)), currentMin), ctrl.limits[1]);
 
           }
           else if(type === 'min') {
